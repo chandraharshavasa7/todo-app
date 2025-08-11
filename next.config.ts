@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   eslint: {
-    ignoreDuringBuilds: true, // ✅ Skip ESLint errors during Vercel build
+    ignoreDuringBuilds: true, // ✅ This stops ESLint from failing the build
   },
 };
 
