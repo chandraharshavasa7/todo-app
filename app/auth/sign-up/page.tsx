@@ -7,16 +7,13 @@ export default async function SignUpPage() {
   if (!isSupabaseConfigured) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <h1 className="text-2xl font-bold mb-4">
-          Connect Supabase to get started
-        </h1>
+        <h1 className="text-2xl font-bold mb-4">Connect Supabase to get started</h1>
       </div>
     )
   }
 
-  // ✅ Await createClient() before using .auth
-  const supabase = await createClient()
-
+  // Check if user is already logged in
+  const supabase = createClient()
   const {
     data: { session },
   } = await supabase.auth.getSession()
