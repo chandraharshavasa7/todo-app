@@ -1,3 +1,4 @@
+// app/dashboard/page.tsx
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -7,7 +8,6 @@ import AddTodoForm from "@/components/ui/add-todo-form"
 import RealtimeTodoWrapper from "@/components/ui/realtime-todo-wrapper"
 
 export default async function DashboardPage() {
-  // If Supabase is not configured, show setup message directly
   if (!isSupabaseConfigured) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -16,13 +16,13 @@ export default async function DashboardPage() {
     )
   }
 
-  // Get the user from the server
-  const supabase = createClient()
+  // ✅ Await the client
+  const supabase = await createClient()
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // If no user, redirect to login
   if (!user) {
     redirect("/auth/login")
   }

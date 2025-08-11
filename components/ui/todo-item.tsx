@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Trash2, Edit, Check, X, Calendar, AlertTriangle } from "lucide-react"
 import { toggleTodo, deleteTodo, updateTodo } from "@/lib/todo-actions"
 import type { Todo } from "@/lib/supabase/client"
-import { useActionState } from "react"
+import { useActionState } from "react-dom"
+
 
 interface TodoItemProps {
   todo: Todo
