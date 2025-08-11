@@ -3,151 +3,126 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 
+type ActionResponse = { success?: string; error?: string }
+
 // Create a new todo
-export async function createTodo(prevState: any, formData: FormData) {
-  if (!formData) {
-    return { error: "Form data is missing" }
-  }
+export async function createTodo(prevState: any, formData: FormData): Promise<ActionResponse> {
+  if (!formData) return { error: "Form data is missing" }
 
-  const title = formData.get("title")
-  const description = formData.get("description")
-  const due_date = formData.get("due_date")
-  const priority = formData.get("priority") || "medium"
+  const title = formData.get("title") as string | null
+  const description = formData.get("description") as string | null
+  const due_date = formData.get("due_date") as string | null
+  const priority = (formData.get("priority") as string | null) || "medium"
 
-  if (!title) {
-    return { error: "Title is required" }
-  }
+  if (!title) return { error: "Title is required" }
 
   const supabase = await createClient()
 
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return { error: "You must be logged in to create todos" }
-    }
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: "You must be logged in to create todos" }
 
     const { error } = await supabase.from("todos").insert({
-      title: title.toString(),
-      description: description?.toString() || null,
-      due_date: due_date?.toString() || null,
-      priority: priority.toString() as "low" | "medium" | "high",
+      title,
+      description: description?.trim() || null,
+      due_date: due_date?.trim() || null,
+      priority: priority as "low" | "medium" | "high",
       user_id: user.id,
     })
 
-    if (error) {
-      console.error("Database error:", error)
-      return { error: error.message }
-    }
+    if (error) return { error: error.message }
 
     revalidatePath("/dashboard")
     return { success: "Todo created successfully" }
-  } catch (error) {
-    console.error("Create todo error:", error)
+  } catch (err) {
+    console.error("Create todo error:", err)
     return { error: "An unexpected error occurred" }
   }
 }
 
-// Update todo completion status
-export async function toggleTodo(todoId: string, completed: boolean) {
+// Toggle completion
+export async function toggleTodo(todoId: string, completed: boolean): Promise<ActionResponse> {
   const supabase = await createClient()
 
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: "You must be logged in" }
 
-    if (!user) {
-      throw new Error("You must be logged in")
-    }
+    const { error } = await supabase
+      .from("todos")
+      .update({ completed })
+      .eq("id", todoId)
+      .eq("user_id", user.id)
 
-    const { error } = await supabase.from("todos").update({ completed }).eq("id", todoId).eq("user_id", user.id)
-
-    if (error) {
-      throw new Error(error.message)
-    }
+    if (error) return { error: error.message }
 
     revalidatePath("/dashboard")
-  } catch (error) {
-    console.error("Toggle todo error:", error)
-    throw error
+    return { success: "Todo updated successfully" }
+  } catch (err) {
+    console.error("Toggle todo error:", err)
+    return { error: "An unexpected error occurred" }
   }
 }
 
-// Update todo title and description
-export async function updateTodo(prevState: any, formData: FormData) {
-  if (!formData) {
-    return { error: "Form data is missing" }
-  }
+// Update todo
+export async function updateTodo(prevState: any, formData: FormData): Promise<ActionResponse> {
+  if (!formData) return { error: "Form data is missing" }
 
-  const todoId = formData.get("todoId")
-  const title = formData.get("title")
-  const description = formData.get("description")
-  const due_date = formData.get("due_date")
-  const priority = formData.get("priority")
+  const todoId = formData.get("todoId") as string | null
+  const title = formData.get("title") as string | null
+  const description = formData.get("description") as string | null
+  const due_date = formData.get("due_date") as string | null
+  const priority = (formData.get("priority") as string | null) || "medium"
 
-  if (!todoId || !title) {
-    return { error: "Todo ID and title are required" }
-  }
+  if (!todoId || !title) return { error: "Todo ID and title are required" }
 
   const supabase = await createClient()
 
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return { error: "You must be logged in" }
-    }
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: "You must be logged in" }
 
     const { error } = await supabase
       .from("todos")
       .update({
-        title: title.toString(),
-        description: description?.toString() || null,
-        due_date: due_date?.toString() || null,
-        priority: (priority?.toString() as "low" | "medium" | "high") || "medium",
+        title,
+        description: description?.trim() || null,
+        due_date: due_date?.trim() || null,
+        priority: priority as "low" | "medium" | "high",
       })
-      .eq("id", todoId.toString())
+      .eq("id", todoId)
       .eq("user_id", user.id)
 
-    if (error) {
-      return { error: error.message }
-    }
+    if (error) return { error: error.message }
 
     revalidatePath("/dashboard")
     return { success: "Todo updated successfully" }
-  } catch (error) {
-    console.error("Update todo error:", error)
+  } catch (err) {
+    console.error("Update todo error:", err)
     return { error: "An unexpected error occurred" }
   }
 }
 
-// Delete a todo
-export async function deleteTodo(todoId: string) {
+// Delete todo
+export async function deleteTodo(todoId: string): Promise<ActionResponse> {
   const supabase = await createClient()
 
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: "You must be logged in" }
 
-    if (!user) {
-      throw new Error("You must be logged in")
-    }
+    const { error } = await supabase
+      .from("todos")
+      .delete()
+      .eq("id", todoId)
+      .eq("user_id", user.id)
 
-    const { error } = await supabase.from("todos").delete().eq("id", todoId).eq("user_id", user.id)
-
-    if (error) {
-      throw new Error(error.message)
-    }
+    if (error) return { error: error.message }
 
     revalidatePath("/dashboard")
-  } catch (error) {
-    console.error("Delete todo error:", error)
-    throw error
+    return { success: "Todo deleted successfully" }
+  } catch (err) {
+    console.error("Delete todo error:", err)
+    return { error: "An unexpected error occurred" }
   }
 }
