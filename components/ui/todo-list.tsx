@@ -6,7 +6,7 @@ import TodoItem from "@/components/ui/todo-item"
 import TodoFilters from "@/components/ui/todo-filters"
 import { Card, CardContent } from "@/components/ui/card"
 import { Loader2, CheckCircle, Clock, AlertTriangle } from "lucide-react"
-import type { TodoFilter, TodoPriority } from "@/lib/supabase/client"
+import type { TodoFilter } from "@/lib/supabase/client"
 
 interface TodoListProps {
   userId: string
@@ -16,8 +16,6 @@ export default function TodoList({ userId }: TodoListProps) {
   const { todos, loading, error } = useTodos(userId)
   const [searchQuery, setSearchQuery] = useState("")
   const [filter, setFilter] = useState<TodoFilter>("all")
-  const [priorityFilter, setPriorityFilter] = useState<TodoPriority | "all">("all")
-  const [showOverdue, setShowOverdue] = useState(false)
 
   const filteredTodos = useMemo(() => {
     if (!todos) return []
@@ -30,14 +28,9 @@ export default function TodoList({ userId }: TodoListProps) {
       const matchesStatus =
         filter === "all" || (filter === "completed" && todo.completed) || (filter === "pending" && !todo.completed)
 
-      const matchesPriority = priorityFilter === "all" || todo.priority === priorityFilter
-
-      const isOverdue = todo.due_date && new Date(todo.due_date) < new Date() && !todo.completed
-      const matchesOverdue = !showOverdue || isOverdue
-
-      return matchesSearch && matchesStatus && matchesPriority && matchesOverdue
+      return matchesSearch && matchesStatus
     })
-  }, [todos, searchQuery, filter, priorityFilter, showOverdue])
+  }, [todos, searchQuery, filter])
 
   if (loading) {
     return (

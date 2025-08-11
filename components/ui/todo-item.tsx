@@ -20,7 +20,7 @@ interface TodoItemProps {
 export default function TodoItem({ todo }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isPending, startTransition] = useTransition()
-  const [editState, editAction] = useActionState(updateTodo, null)
+  const [, editAction] = useActionState(updateTodo, null)
 
   const handleToggle = () => {
     startTransition(() => {
